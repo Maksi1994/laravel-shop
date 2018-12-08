@@ -13,6 +13,10 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function orders() {
+        return $this->hasMany(Order::class);
+    }
+
     public function promotions() {
         return $this->belongsToMany(Promotion::class);
     }

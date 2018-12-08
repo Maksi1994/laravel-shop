@@ -73,3 +73,19 @@ Route::group([
     Route::post('/update', 'PromotionsController@update');
     Route::post('/delete', 'PromotionsController@delete');
 });
+
+
+Route::group([
+    'namespace' => 'Backend',
+    'prefix' => 'backend/order'
+], function () {
+    Route::post('/get-list', 'OrdersController@getList');
+    Route::post('/get-one', 'OrdersController@getOne');
+});
+
+Route::group([
+    'prefix' => '/product'
+], function () {
+    Route::post('/get-list', 'ProductsController@getAll');
+    Route::post('/get-one', 'ProductsController@getOne');
+});

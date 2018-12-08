@@ -22,7 +22,6 @@ Route::group([
 
 });
 
-
 Route::group([
     'namespace' => 'Auth',
     'prefix' => 'auth'
@@ -36,11 +35,41 @@ Route::group([
 
 Route::group([
     'namespace' => 'Backend',
-    'prefix' => 'backend'
+    'prefix' => 'backend/product'
 ], function () {
-    Route::post('/get-product-list', 'ProductsController@getAll');
-    Route::post('/get-product', 'ProductsController@getOne');
-    Route::post('/create-product', 'ProductsController@createProduct');
-    Route::post('/update-product', 'ProductsController@updateProduct');
-    Route::post('/delete-product', 'ProductsController@deleteProduct');
+    Route::post('/get-list', 'ProductsController@getAll');
+    Route::post('/get-one', 'ProductsController@getOne');
+    Route::post('/create', 'ProductsController@create');
+    Route::post('/update', 'ProductsController@update');
+    Route::post('/delete', 'ProductsController@delete');
+});
+
+Route::group([
+    'namespace' => 'Backend',
+    'prefix' => 'backend/category'
+], function () {
+    Route::post('/get-list', 'CategoriesController@getAll');
+    Route::post('/get-one', 'CategoriesController@getOne');
+    Route::post('/create', 'CategoriesController@create');
+    Route::post('/update', 'CategoriesController@update');
+    Route::post('/delete', 'CategoriesController@delete');
+});
+
+
+Route::group([
+    'namespace' => 'Backend',
+    'prefix' => 'backend/promotion'
+], function () {
+    Route::post('/get-list', 'PromotionsController@getAll');
+
+    Route::post('/get-product-list', 'PromotionsController@getProductsList');
+    Route::post('/get-product', 'PromotionsController@getProduct');
+    Route::post('/add-product', 'PromotionsController@addProduct');
+    Route::post('/update-product', 'PromotionsController@addProduct');
+    Route::post('/delete-product', 'PromotionsController@deleteProduct');
+
+    Route::post('/get-one', 'PromotionsController@getOne');
+    Route::post('/create', 'PromotionsController@create');
+    Route::post('/update', 'PromotionsController@update');
+    Route::post('/delete', 'PromotionsController@delete');
 });

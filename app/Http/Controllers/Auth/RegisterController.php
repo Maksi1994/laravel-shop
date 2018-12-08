@@ -51,7 +51,7 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $request->all();
 
         $validator = Validator::make($data, [
             'first_name' => ['required', 'string', 'max:255'],

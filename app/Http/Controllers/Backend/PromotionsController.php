@@ -38,8 +38,7 @@ class PromotionsController extends Controller
 
     public function update(Request $request)
     {
-        $success = (boolean)Promotion::where(['id' => $request->id])
-            ->update($request->all());
+        $success = (boolean)Promotion::where(['id' => $request->id])->update($request->all());
 
         return response()->json(compact('success'));
     }
@@ -62,3 +61,4 @@ class PromotionsController extends Controller
         return response()->json(compact('success'));
     }
 }
+

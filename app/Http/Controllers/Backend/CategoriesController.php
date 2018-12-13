@@ -25,14 +25,12 @@ class CategoriesController extends Controller
 
     public function create(Request $request)
     {
-        $requestData = $request->all();
-
-        $validator = Validator::make($requestData, [
+        $validator = Validator::make($request->all(), [
             'name' => 'required|unique:categories'
         ]);
 
         if (!$validator->fails()) {
-            $success = Category::create($requestData);
+            $success = Category::create($request->all());
 
             return response()->json([
                 'success' => (boolean)$success
@@ -55,7 +53,9 @@ class CategoriesController extends Controller
 
     public function update(Request $request)
     {
+        $success = Category::where('id', $request->id)->update($request->all());
 
+        return response()->json(compact('success'));
     }
 
     public function delete(Request $request)

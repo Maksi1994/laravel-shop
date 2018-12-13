@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Models\Backend\Product\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductsController extends Controller
@@ -39,21 +40,18 @@ class ProductsController extends Controller
 
     public function create(Request $request)
     {
-        $reqData = $request->all();
-        $photo = 'image.png';
-
-        $reqData['image'] = $photo;
-
-        $validator = Validator::make($reqData, [
+        $validator = Validator::make($request->all(), [
             'name' => ['required'],
             'category_id' => ['required'],
             'image' => ['required']
         ]);
 
         if (!$validator->fails()) {
-            var_dump($reqData);
+            var_dump($request->allFiles());
 
-            Product::create($reqData);
+            $photo = Storage::disk('space')->putFile('products', $request->image);
+
+            Product::create($request->all());
 
             return response()->json([
                 'success' => true

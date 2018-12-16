@@ -36,18 +36,11 @@ class ParamsController extends Controller
         $validationValues = Validator::make($request->all(), ['values.*.name' => 'required']);
 
         if (!$validationParam->fails()) {
-            $created_id = Param::create($request->all())->id;
+            $param = Param::create($request->all());
             $success = true;
 
             if (!$validationValues->fails() && count($request->get('values'))) {
-                $values = array_map(function ($val) use ($created_id) {
-                    return [
-                        'value' => $val['name'],
-                        'param_id' => $created_id
-                    ];
-                }, $request->values);
-
-                Value::insert($values);
+                $param->createMany($request->values);
             }
         }
 
@@ -70,14 +63,7 @@ class ParamsController extends Controller
             $param->values()->delete();
 
             if (count($request->values)) {
-                $values = array_map(function ($value) use ($request) {
-                    return [
-                        'value' => $value['value'],
-                        'param_id' => $request->param_id
-                    ];
-                }, $request->values);
-
-                Value::insert($values);
+                $param->createMany($request->values);
             }
         }
 

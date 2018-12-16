@@ -2,25 +2,38 @@
 
 namespace App\Http\Controllers\Backend;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Resources;
 use App\Http\Controllers\Controller;
 use App\Models\Backend\Order;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class OrdersController extends Controller
 {
 
     public function getList(Request $request)
     {
-        $orders = Order::with(['products', 'user'])
+        $ordersCollection = Order::with(['products', 'user'])
             ->paginate(10, ['*'], ['page'], ($request->page ?? 1));
 
+        $ordersList = $ordersCollection->map(function($order) {
+            return [
+                'id' => $order->id,
+                'user' => [
+                    'id' => $order->user->id,
+                    'first_name' => $order->user->first_name,
+                    'last_name' => $order->user->last_name,
+                ],
+                'count' => count($order->products)
+            ];
+        });
+
         return response()->json([
-            'result' => $orders->values(),
+            'result' => $ordersList->all(),
             'meta' => [
-                'per_page' => $orders->perPage(),
-                'last_page' => $orders->lastPage(),
-                'page' => $orders->currentPage()
+                'per_page' => $ordersCollection->perPage(),
+                'last_page' => $ordersCollection->lastPage(),
+                'page' => $ordersCollection->currentPage()
             ]
         ]);
     }

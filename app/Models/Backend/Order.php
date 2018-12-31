@@ -3,11 +3,13 @@
 namespace App\Models\Backend;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Backend\Product\Product;
 use App\User;
 
 class Order extends Model
 {
+    public $timestamps = true;
+    public $guarded = [];
+
     public function products() {
         return $this->belongsToMany(Product::class);
     }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Models\Backend\Product\Category;
+use App\Models\Backend\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -11,15 +11,16 @@ class CategoriesController extends Controller
 {
     public function getAll(Request $request)
     {
-        $categories = Category::orderBy('created_at', 'desc')->paginate(15, ['*'], ['page'], $request->page);
+        $categories = Category::orderBy('created_at', 'desc')->get();
 
         return response()->json([
-            'meta' => [
-                'total' => $categories->total(),
-                'per_page' => $categories->perPage(),
-                'last_page' => $categories->lastPage()
-            ],
-            'result' => $categories->all()
+            'result' => $categories->map(function($category) {
+               return [
+                   'id' => $category->id,
+                   'name' => $category->name,
+                   'created_at' => $category->create_at
+               ];
+            })
         ]);
     }
 

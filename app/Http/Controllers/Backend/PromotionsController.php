@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Models\Backend\Product\Promotion;
+use App\Models\Backend\Promotion;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 

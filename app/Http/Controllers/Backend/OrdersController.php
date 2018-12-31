@@ -13,23 +13,18 @@ class OrdersController extends Controller
 
     public function getList(Request $request)
     {
-        $ordersCollection = Order::with(['products', 'user'])
-            ->paginate(10, ['*'], ['page'], ($request->page ?? 1));
-
-        $ordersList = $ordersCollection->map(function($order) {
-            return [
-                'id' => $order->id,
-                'user' => [
-                    'id' => $order->user->id,
-                    'first_name' => $order->user->first_name,
-                    'last_name' => $order->user->last_name,
-                ],
-                'count' => count($order->products)
-            ];
-        });
+        $ordersCollection = Order::selectRaw('
+             orders.created_at,
+             SUM(order_product.count) as count,
+             SUM(order_product.count * order_product.price) as full_price
+             ')
+            ->join('users', 'orders.user_id', '=', 'users.id')
+            ->join('order_product', 'orders.id', '=', 'order_product.order_id')
+            ->groupBy(['orders.id'])
+            ->paginate('10', null, null, $request->page ?? 1);
 
         return response()->json([
-            'result' => $ordersList->all(),
+            'result' => $ordersCollection->all(),
             'meta' => [
                 'per_page' => $ordersCollection->perPage(),
                 'last_page' => $ordersCollection->lastPage(),
@@ -71,17 +66,16 @@ class OrdersController extends Controller
         $order = Order::find($request->order_id);
 
         if (!$validationProducts->fails() && $order) {
-            $currentProducts = $request->products;
             $success = true;
-            $products = [];
-
-            array_walk($currentProducts, function ($product) use (&$products)  {
-                $products[$product['product_id']] = [
+            $reveicedProductsCollection = collect($request->products);
+            $orderDataForSaving = [];
+            $reveicedProductsCollection->eachSpread(function ($product) use (&$orderDataForSaving) {
+                $orderDataForSaving[$product['product_id']] = [
                     'count' => $product['count']
                 ];
             });
 
-            $order->products()->sync($products);
+            $order->products()->sync($orderDataForSaving);
         }
 
         return response()->json(compact('success'));

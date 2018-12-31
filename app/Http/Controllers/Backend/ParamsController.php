@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Models\Backend\Param\Param;
-use App\Models\Backend\Param\Value;
+use App\Models\Backend\Param;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;

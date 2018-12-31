@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Backend;
 
-use App\Models\Backend\Product\Product;
+use App\Models\Backend\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -14,10 +15,14 @@ class ProductsController extends Controller
 
     public function getAll(Request $request)
     {
+        $baseQuery = Product::with('category');
+
         $products = Product::with('category')
-            ->orderBy('name', 'desc')
+            ->filter($request->all())
+            ->orderBy('created_at', $request->order ?? 'desc')
             ->paginate(15, ['*'], ['page'], $request->page);
 
+        $priceRange = $baseQuery->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')->first();
 
         return response()->json([
             'meta' => [
@@ -25,50 +30,96 @@ class ProductsController extends Controller
                 'per_page' => $products->perPage(),
                 'last_page' => $products->lastPage()
             ],
-            'result' => $products->all()
+            "max_price" => $priceRange->max_price,
+            "min_price" => $priceRange->min_price,
+            'result' => $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'created_at' => $product->created_at->format('Y M d    -   h:m A'),
+                    'category' => $product->category->name
+                ];
+            })
         ]);
     }
 
     public function getOne(Request $request)
     {
-        $product = Product::find($request->id);
+        $product = Product::selectRaw('
+        products.id,
+        COUNT(order_product.product_id) as sum_boughts,
+        products.price,
+        products.image,
+        products.name,
+        products.created_at,
+        products.category_id
+        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
+            ->groupBY('products.id')
+            ->find($request->id);
 
         return response()->json([
-            'result' => $product
+            'result' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'image' => env('DO_SPACES_DOMAIN') . $product->image,
+                'created_at' => $product->created_at->format('Y M d    -   h:m A'),
+                'price' => $product->price,
+                'sum_boughts' => $product->sum_boughts
+            ]
         ]);
     }
 
     public function create(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required'],
-            'category_id' => ['required'],
-            'image' => ['required']
+        $success = false;
+        $productData = $request->all();
+        $validator = Validator::make($productData, [
+            'name' => 'required',
+            'price' => 'required|numeric',
+            'category_id' => 'required',
+            'image' => 'required'
         ]);
 
+        $extension = $request->file('image')->extension();
+        $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
+
         if (!$validator->fails()) {
-            var_dump($request->allFiles());
-
-            $photo = Storage::disk('space')->putFile('products', $request->image);
-
-            Product::create($request->all());
-
-            return response()->json([
-                'success' => true
-            ]);
+            $productData['image'] = $photo;
+            $product = Product::create($productData);
+            $success = true;
         }
 
         return response()->json([
-            'success' => false
+            'result' => [
+                'success' => $success,
+                'id' => $product->id
+            ]
         ]);
     }
 
     public function update(Request $request)
     {
-        $success = Product::where('id', $request->id)
-            ->update([
-                'name' => $request->name
-            ]);
+        $product = Product::find($request->id);
+        $success = false;
+        $productData = $request->all();
+        $validator = Validator::make($productData, [
+            'name' => 'required',
+            'price' => 'required|numeric',
+            'category_id' => 'required'
+        ]);
+
+        if ($product && !$validator->fails()) {
+
+            if (Storage::disk('space')->exists($product->image) && $productData['image']) {
+                Storage::disk('space')->delete($product->image);
+                $extension = $request->file('image')->extension();
+                $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
+                $productData['image'] = $photo;
+            }
+
+            $success = $product->update($productData);
+        }
 
         return response()->json([
             'success' => (boolean)$success

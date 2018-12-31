@@ -102,4 +102,17 @@ Route::group([
 ], function () {
     Route::post('/get-list', 'ProductsController@getAll');
     Route::post('/get-one', 'ProductsController@getOne');
+    Route::post('/get-most-popular', 'ProductsController@getMostPopular');
+    Route::post('/get-last-added', 'ProductsController@getLastAdded');
 });
+
+
+Route::group([
+    'prefix' => '/order'
+], function () {
+    Route::post('/get-list', 'OrdersController@getList');
+    Route::post('/create', 'OrdersController@create');
+    Route::post('/get-one', 'OrdersController@getOne');
+    Route::post('/delete', 'OrdersController@delete');
+});
+

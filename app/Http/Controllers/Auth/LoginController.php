@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -48,7 +47,9 @@ class LoginController extends Controller
             return response()->json(Auth::attempt($creditionals));
         }
 
-        return response()->json(false);
+        return response()->json([
+            'success' => false
+        ]);
     }
 
     public function logout(Request $request)
@@ -56,10 +57,14 @@ class LoginController extends Controller
         if (Auth::check()) {
             Auth::logout();
 
-            return response()->json(true);
+            return response()->json([
+                'success' => true
+            ]);
         }
 
-        return response()->json(false);
+        return response()->json([
+            'success' => false
+        ]);
     }
 
     public function getAuthUser(Request $request) {

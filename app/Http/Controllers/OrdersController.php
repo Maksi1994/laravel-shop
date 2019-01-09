@@ -77,7 +77,7 @@ class OrdersController extends Controller
     public function getOne(Request $request)
     {
         $order = Order::selectRaw('
-             users.first_name, 
+             users.first_name,
              users.last_name,
              SUM(order_product.count * order_product.price) as full_price,
              ')
@@ -88,14 +88,14 @@ class OrdersController extends Controller
             ->groupBy(['orders.id'])
             ->get();
 
-        $products = Order::with('products')
+        $orderProducts = Order::with('products')
             ->find($request->id)
             ->get();
 
         return response()->json([
             'result' => [
                 'order' => $order,
-                'products' => $products->products
+                'products' => $orderProducts->products
             ]
         ]);
     }

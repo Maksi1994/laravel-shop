@@ -15,12 +15,14 @@ class PromotionsController extends Controller
         $image = 'image.png';
 
         if (!empty($request->name) && !empty($image)) {
-            $success = (boolean)Promotion::create(
+            Promotion::create(
                 array_merge(
                     $request->all(),
                     ['image' => $image]
                 )
             );
+
+            $success = true;
         }
 
         return response()->json(compact('success'));
@@ -60,5 +62,32 @@ class PromotionsController extends Controller
 
         return response()->json(compact('success'));
     }
-}
 
+    public function deleteProduct(Request $request)
+    {
+      $promotion = Promotion::find($request->promotion_id);
+      $success = false;
+
+      if (!empty($promotion) &&
+          !empty($request->product_id)) {
+          $promotion->products()->detach([$request->product_id]);
+
+          $success = true;
+      }
+
+      return response()->json(compact('success'));
+    }
+
+    public function removeAllProducts(Request $request)
+    {
+      $promotion = Promotion::find($request->promotion_id);
+      $success = false;
+
+      if (!empty($promotion)) {
+            $promotion->products()->detach();
+            $success = true;
+      }
+
+      return response()->json(compact('success'));
+    }
+}

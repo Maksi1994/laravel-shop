@@ -61,19 +61,18 @@ class RegisterController extends Controller
             'role_id' => ['required']
         ]);
 
-        $isValid = !$validator->fails();
-
-        if ($isValid) {
+        if (!$validator->fails()) {
             User::create([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'email' => $data['email'],
-                'role_id' => ['role_id'],
+                'role_id' => $data['role_id'],
                 'password' => Hash::make($data['password']),
             ]);
+
+            return response()->json(['success' => true]);
         }
 
-        return response()->json(['success' => $isValid]);
+        return response()->json(['success' => false]);
     }
-
 }

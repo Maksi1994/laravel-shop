@@ -3,17 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Product\Product;
+use App\Models\Product;
+use App\Models\Category;
 
 class ProductsController extends Controller
 {
     public function getAll(Request $request)
     {
 
-        $categories = [1, 2];
+        $categoriesIds = Category::childrenIds($request->catId ?? 0);
 
         $products = Product::with('category')
-            ->whereIn('category_id', $categories)
+            ->whereIn('category_id', $categoriesIds)
             ->paginate(10, ['*'], ['page'], ($request->page ?? 1));
 
         return response()->json([
@@ -38,7 +39,7 @@ class ProductsController extends Controller
     public function getMostPopular()
     {
         $products = Product::selectRaw('
-            products.id, 
+            products.id,
             COUNT(products.id) as orders_count,
             products.price,
             products.image,
@@ -90,4 +91,3 @@ class ProductsController extends Controller
     }
 
 }
-

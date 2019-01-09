@@ -23,11 +23,11 @@ class Product extends Model
     }
 
     public function promotions() {
-        return $this->belongsToMany(Promotion::class);
+        return $this->belongsToMany(Promotion::class)->withTimestamps();
     }
 
     public function scopeFilter($query, $params) {
-        if (is_numeric($params['categoryId'])) {
+        if (!empty($params['categoryId'])  && is_numeric($params['categoryId'])) {
             $query = $query->where('category_id', $params['categoryId']);
         }
 

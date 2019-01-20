@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,18 +18,12 @@ class UserGuard
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        $failResponce = responce()->json([
-          'success' => false
-        ]);
+        $userRole = User::find(Auth::user()->id)->role->name;
 
-        if (!Auth::check()) {
-            return $failResponce;
-        }
-
-        $user = Auth::user();
-
-        if ($guard === 'admin' && $user->role !== 'admin') {
-             return $failResponce;
+        if ($userRole !== $guard) {
+             return response()->json([
+                 'success' => false
+             ]);
         }
 
         return $next($request);

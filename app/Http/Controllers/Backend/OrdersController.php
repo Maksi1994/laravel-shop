@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Backend;
 
-use Illuminate\Http\Resources;
+use App\Http\Resources\Backend\Order\OrderCollection;
+use App\Http\Resources\Backend\Order\OrderResource;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Backend\Order;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 class OrdersController extends Controller
 {
 
     public function getList(Request $request)
     {
-        $ordersCollection = Order::selectRaw('
+        $orders = Order::selectRaw('
              orders.created_at,
              SUM(order_product.count) as count,
              SUM(order_product.count * order_product.price) as full_price
@@ -23,32 +24,21 @@ class OrdersController extends Controller
             ->groupBy(['orders.id'])
             ->paginate('10', null, null, $request->page ?? 1);
 
-        return response()->json([
-            'result' => $ordersCollection->all(),
-            'meta' => [
-                'per_page' => $ordersCollection->perPage(),
-                'last_page' => $ordersCollection->lastPage(),
-                'page' => $ordersCollection->currentPage()
-            ]
-        ]);
+        return new OrderCollection($orders);
     }
 
     public function getOne(Request $request)
     {
-        $order = Order::with(['products', 'user'])
-            ->where('id', '=', $request->id)
-            ->get();
+        $order = Order::with(['products', 'user'])->find($request->id);
 
-        return response()->json([
-            'result' => $order->values()
-        ]);
+        return new OrderResource($order);
     }
 
     public function update(Request $request)
     {
         $success = (boolean)Order::where('id', $request->id)->update($request->all());
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function setProducts(Request $request)
@@ -67,9 +57,9 @@ class OrdersController extends Controller
 
         if (!$validationProducts->fails() && $order) {
             $success = true;
-            $reveicedProductsCollection = collect($request->products);
             $orderDataForSaving = [];
-            $reveicedProductsCollection->eachSpread(function ($product) use (&$orderDataForSaving) {
+
+            collect($request->products)->eachSpread(function ($product) use (&$orderDataForSaving) {
                 $orderDataForSaving[$product['product_id']] = [
                     'count' => $product['count']
                 ];
@@ -78,13 +68,13 @@ class OrdersController extends Controller
             $order->products()->sync($orderDataForSaving);
         }
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function delete(Request $request)
     {
         $success = (boolean)Order::destroy($request->id);
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 }

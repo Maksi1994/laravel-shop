@@ -27,7 +27,7 @@ class Product extends Model
     }
 
     public function scopeFilter($query, $params) {
-        if (!empty($params['categoryId'])  && is_numeric($params['categoryId'])) {
+        if (!empty($params['categoryId']) && is_numeric($params['categoryId'])) {
             $query = $query->where('category_id', $params['categoryId']);
         }
 

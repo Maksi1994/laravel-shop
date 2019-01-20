@@ -1,15 +1,16 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Role;
+use Laravel\Passport\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasApiTokens, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -17,7 +18,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'password',
+        'id', 'first_name', 'last_name', 'email', 'password',
     ];
 
     /**
@@ -28,9 +29,15 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
-    
-    
-    public function role() {
+
+
+    public function role()
+    {
         return $this->belongsTo(Role::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role()->where('name', 'admin')->exists();
     }
 }

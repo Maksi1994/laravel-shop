@@ -14,19 +14,19 @@ use Illuminate\Http\Request;
 */
 
 Route::group([
-    'namespace' => 'Auth',
-    'prefix' => 'auth'
+    'prefix' => 'users'
 ], function () {
-    Route::post('/regist', 'RegisterController@register');
-    Route::post('/login', 'LoginController@login');
-    Route::post('/logout', 'LoginController@logout');
-    Route::post('/get-curr-user', 'LoginController@getAuthUser');
+    Route::post('/regist', 'UserController@regist');
+    Route::post('/login', 'UserController@login');
+    Route::post('/logout', 'UserController@logout')->middleware('auth:api');
+    Route::post('/get-auth-user', 'UserController@getAuthUser')->middleware('auth:api');
+    Route::post('/get-all-roles', 'UserController@getAllRoles');
 });
 
 Route::group([
     'namespace' => 'Backend',
     'prefix' => 'backend',
-  //  'middleware' => ['user:admin']
+    'middleware' => ['auth:api', 'user:admin']
 ], function () {
 
   Route::prefix('/products')->group(function () {
@@ -103,10 +103,29 @@ Route::group([
     Route::post('/delete', 'OrdersController@delete');
 });
 
-
 Route::group([
     'prefix' => '/promotions'
 ], function () {
     Route::post('/get-products-by-promotion', 'PromotionsController@getProductsByPromotion');
     Route::post('/get-last-products', 'PromotionsController@getLastProducts');
+});
+
+Route::group([
+    'prefix' => '/comments'
+], function () {
+    Route::post('/create', 'CommentsController@create')->middleware('auth:api');
+    Route::post('/update', 'CommentsController@update')->middleware('auth:api');
+    Route::post('/delete', 'CommentsController@delete')->middleware('auth:api');
+    Route::post('/get-product-comments', 'CommentsController@getProductComments');
+    Route::post('/get-all-my-comments', 'CommentsController@getAllMyComments')->middleware('auth:api');
+});
+
+Route::group([
+    'prefix' => '/baskets',
+    'middleware' => ['auth:api']
+], function () {
+    Route::post('/get-one', 'BasketsController@get-one');
+    Route::post('/create', 'BasketsController@create');
+    Route::post('/update', 'BasketsController@update');
+    Route::post('/delete', 'BasketsController@delete');
 });

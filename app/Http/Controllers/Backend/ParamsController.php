@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Http\Resources\Backend\Promotion\PromotionCollection;
+use App\Http\Resources\Backend\Promotion\PromotionResource;
 use App\Models\Backend\Param;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -14,14 +16,14 @@ class ParamsController extends Controller
     {
         $params = Param::paginate(15, null, null, $request->page ?? 1);
 
-        return response()->json([
-            'result' => $params->values(),
-            'meta' => [
-                'total' => $params->total(),
-                'per_page' => $params->perPage(),
-                'last_page' => $params->lastPage()
-            ]
-        ]);
+        return new PromotionCollection($params);
+    }
+
+    public function getOne(Request $request)
+    {
+        $param = Param::with('values')->where('id', '=', $request->id)->get();
+
+        return new PromotionResource($param);
     }
 
     public function create(Request $request)
@@ -43,7 +45,7 @@ class ParamsController extends Controller
             }
         }
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function setValues(Request $request)
@@ -66,30 +68,21 @@ class ParamsController extends Controller
             }
         }
 
-        return response()->json(compact('success'));
-    }
-
-    public function getOne(Request $request)
-    {
-        $param = Param::with('values')->where('id', '=', $request->id)->get();
-
-        return response()->json([
-            'result' => $param
-        ]);
+        return $this->success($success);
     }
 
     public function update(Request $request)
     {
         $success = Param::where('id', $request->id)->update($request->all());
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function delete(Request $request)
     {
         $success = (boolean)Param::destroy($request->id);
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
 }

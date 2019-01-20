@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Http\Resources\Backend\Product\ProductResource;
+use App\Http\Resources\Backend\Product\ProductСollection;
 use App\Models\Backend\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductsController extends Controller
 {
-
 
     public function getAll(Request $request)
     {
@@ -23,23 +23,11 @@ class ProductsController extends Controller
             ->paginate(15, ['*'], ['page'], $request->page);
 
         $priceRange = $baseQuery->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')->first();
+        $responseData = new ProductСollection($products);
 
-        return response()->json([
-            'meta' => [
-                'total' => $products->total(),
-                'per_page' => $products->perPage(),
-                'last_page' => $products->lastPage()
-            ],
+        return $responseData->additional([
             "max_price" => $priceRange->max_price,
-            "min_price" => $priceRange->min_price,
-            'result' => $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'created_at' => $product->created_at->format('Y M d    -   h:m A'),
-                    'category' => $product->category->name
-                ];
-            })
+            "min_price" => $priceRange->min_price
         ]);
     }
 
@@ -56,17 +44,10 @@ class ProductsController extends Controller
         ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
             ->groupBY('products.id')
             ->find($request->id);
+        $responseData = new ProductResource($product);
 
-        return response()->json([
-            'result' => [
-                'id' => $product->id,
-                'name' => $product->name,
-                'category_id' => $product->category_id,
-                'image' => env('DO_SPACES_DOMAIN') . $product->image,
-                'created_at' => $product->created_at->format('Y M d    -   h:m A'),
-                'price' => $product->price,
-                'sum_boughts' => $product->sum_boughts
-            ]
+        return $responseData->additional([
+            'sum_boughts' => $product->sum_boughts
         ]);
     }
 
@@ -117,21 +98,17 @@ class ProductsController extends Controller
                 $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
                 $productData['image'] = $photo;
             }
-
-            $success = $product->update($productData);
+            $success = true;
+            $product->update($productData);
         }
 
-        return response()->json([
-            'success' => (boolean)$success
-        ]);
+        return response()->json(compact('success'));
     }
 
     public function delete(Request $request)
     {
-        $success = Product::destroy($request->id);
+        $success = (boolean)Product::find($request->id);
 
-        return response()->json([
-            'success' => (boolean)$success
-        ]);
+        return $this->success($success);
     }
 }

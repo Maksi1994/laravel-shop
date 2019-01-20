@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Http\Resources\Backend\Promotion\PromotionCollection;
+use App\Http\Resources\Backend\Promotion\PromotionResource;
 use App\Models\Backend\Promotion;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -9,40 +11,42 @@ use App\Http\Controllers\Controller;
 class PromotionsController extends Controller
 {
 
+    public function getList(Request $request)
+    {
+        $promotions = Promotion::paginate(15, ['*'], ['page'], $request->page);
+
+        return new PromotionCollection($promotions);
+    }
+
     public function create(Request $request)
     {
         $success = false;
         $image = 'image.png';
+        $request->merge(['image', $image]);
 
         if (!empty($request->name) && !empty($image)) {
-            Promotion::create(
-                array_merge(
-                    $request->all(),
-                    ['image' => $image]
-                )
-            );
+            Promotion::create($request->all());
 
             $success = true;
         }
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function getOne(Request $request)
     {
-        $product = Promotion::find($request->id);
+        $promotion = Promotion::find($request->id);
 
-        return response()->json([
-            'result' => $product
-        ]);
+        return new PromotionResource($promotion);
     }
 
 
     public function update(Request $request)
     {
-        $success = (boolean)Promotion::where(['id' => $request->id])->update($request->all());
+        $success = (boolean)Promotion::where(['id' => $request->id])
+            ->update($request->all());
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function addProduct(Request $request)
@@ -60,7 +64,7 @@ class PromotionsController extends Controller
             $success = true;
         }
 
-        return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function deleteProduct(Request $request)
@@ -75,7 +79,7 @@ class PromotionsController extends Controller
           $success = true;
       }
 
-      return response()->json(compact('success'));
+        return $this->success($success);
     }
 
     public function removeAllProducts(Request $request)
@@ -88,6 +92,6 @@ class PromotionsController extends Controller
             $success = true;
       }
 
-      return response()->json(compact('success'));
+        return $this->success($success);
     }
 }

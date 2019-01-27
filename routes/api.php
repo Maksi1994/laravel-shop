@@ -124,8 +124,7 @@ Route::group([
     'prefix' => '/baskets',
     'middleware' => ['auth:api']
 ], function () {
-    Route::post('/get-one', 'BasketsController@get-one');
-    Route::post('/create', 'BasketsController@create');
-    Route::post('/update', 'BasketsController@update');
+    Route::post('/get-basket', 'BasketsController@getBasket');
+    Route::post('/save-basket', 'BasketsController@saveBasket');
     Route::post('/delete', 'BasketsController@delete');
 });

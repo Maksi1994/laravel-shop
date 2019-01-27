@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class CategoryCollection extends ResourceCollection
 {
-    public $collects = 'App\Http\Resources\Backend\Product\ProductResource';
+    public $collects = CategoryResource::class;
 
     /**
      * Transform the resource collection into an array.

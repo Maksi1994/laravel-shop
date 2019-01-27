@@ -19,7 +19,7 @@ class OrdersController extends Controller
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->where('users.id', '=', 1)
-            ->groupBy(['orders.id'])
+            ->groupBy('orders.id')
             ->paginate('10', null, null, $request->page ?? 1);
 
         return response()->json([

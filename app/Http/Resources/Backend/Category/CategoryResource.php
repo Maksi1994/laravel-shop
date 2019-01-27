@@ -9,7 +9,7 @@ class CategoryResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public function toArray($request)
@@ -17,7 +17,12 @@ class CategoryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'created_at' => $this->create_at
+            $this->mergeWhen(!empty($this->parent), ['parent' => [
+                'id' => $this->parent['id'],
+                'name' => $this->parent['name']
+            ]]),
+            'created_at' => $this->created_at->format('Y M d    -   h:m A'),
+            'productsCount' => $this->products_count
         ];
     }
 }

@@ -8,19 +8,20 @@ use App\Models\Backend\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CategoriesController extends Controller
 {
     public function getAll(Request $request)
     {
-        $categories = Category::orderBy('created_at', 'desc')->get();
+        $categories = Category::with('parent')->withCount('products')->get();
 
         return new CategoryCollection($categories);
     }
 
     public function getOne(Request $request)
     {
-        $category = Category::find($request->id);
+        $category = Category::with('parent')->withCount('products')->find($request->id);
 
         return new CategoryResource($category);
     }
@@ -41,14 +42,29 @@ class CategoriesController extends Controller
 
     public function update(Request $request)
     {
-        $success = (boolean) Category::where('id', $request->id)->update($request->all());
+        $validator = Validator::make($request->all(), [
+            'name' => [
+                'required',
+                Rule::unique('categories')->ignore($request->id),
+            ],
+        ]);
+        $success = false;
+
+        if (!$validator->fails()) {
+            Category::where('id', $request->id)->update([
+                'name' => $request->name,
+                'parent_id' => !empty($request->parentId) ? $request->parentId : 0
+            ]);
+
+            $success = true;
+        }
 
         return $this->success($success);
     }
 
     public function delete(Request $request)
     {
-        $success = (boolean) Category::destroy($request->id);
+        $success = (boolean)Category::destroy($request->id);
 
         return $this->success($success);
     }

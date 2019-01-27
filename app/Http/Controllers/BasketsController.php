@@ -5,19 +5,45 @@ namespace App\Http\Controllers;
 use App\Models\Basket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class BasketsController extends Controller
 {
 
-    public function getOne(Request $request)
+    public function getBasket(Request $request)
     {
-        $basket = Basket::with('products')->find($request->id);
+        $basket = Basket::selectRaw('
+            SUM(products.price * basket_product.count) as price,
+            ANY_VALUE(basket_product.count) as count,
+            products.id as id,
+            ANY_VALUE(products.name) as name,
+            ANY_VALUE(products.image) as image,
+            ANY_VALUE(baskets.updated_at) as updated_at
+            ')
+            ->leftJoin('basket_product', 'baskets.id', '=', 'basket_product.basket_id')
+            ->leftJoin('products', 'basket_product.product_id', '=', 'products.id')
+            ->whereRaw('customer_id = ?', [Auth::id()])
+            ->groupBy(DB::raw('products.id with rollup'))
+            ->get();
 
-        // return
+        $last_row = $basket->pop();
+
+        return response()->json([
+            'result' => $basket->map(function ($product) use ($last_row) {
+                return [
+                    'id' => $product->id,
+                    'price' => $product->price,
+                    'name' => $product->name,
+                    'image' => $product->image,
+                    'updated_at' => $product->updated_at->format('Y M d    -   h:m A')
+                ];
+            }),
+            'full_price' => $last_row->price
+        ]);
     }
 
-    public function create(Request $request)
+    public function saveBasket(Request $request)
     {
         $request->merge(['customer_id' => Auth::id()]);
 
@@ -26,34 +52,21 @@ class BasketsController extends Controller
             'products.*.id' => 'required|exists:products,id',
             'products.*.count' => 'required|min:1'
         ]);
+
         $success = false;
 
         if (!$validator->fails()) {
-            $basket = Basket::create($request->all());
-            $basketProduct = [];
-
-            collect($request->product)->eachSpread(function($product) use (&$basketProduct) {
-                $basketProduct[$product->id] = [
-                    'count' => $product->count
-                ];
-            });
-            $basket->products()->sync($basketProduct);
-
+            Basket::saveBasket($request);
             $success = true;
         }
 
         return $this->success($success);
     }
 
-    public function update()
-    {
-
-    }
-
     public function delete(Request $request)
     {
-        $success = (boolean)Basket::destroy($request->id);
+        Basket::where('customer_id', $request->customer_id)->delete();
 
-        return $this->success($success);
+        return $this->success(true);
     }
 }

@@ -34,15 +34,15 @@ class ProductsController extends Controller
     public function getOne(Request $request)
     {
         $product = Product::selectRaw('
-        products.id,
-        COUNT(order_product.product_id) as sum_boughts,
-        products.price,
-        products.image,
-        products.name,
-        products.created_at,
-        products.category_id
+        ANY_VALUE(products.id),
+        COUNT(order_product.count) as sum_boughts,
+        ANY_VALUE(products.price),
+        ANY_VALUE(products.image),
+        ANY_VALUE(products.name),
+        ANY_VALUE(products.created_at),
+        ANY_VALUE(products.category_id)
         ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
-            ->groupBY('products.id')
+            ->groupBY(['products.id'])
             ->find($request->id);
         $responseData = new ProductResource($product);
 
@@ -74,7 +74,7 @@ class ProductsController extends Controller
         return response()->json([
             'result' => [
                 'success' => $success,
-                'id' => $product->id
+                'id' => !empty($product) ? $product->id : null
             ]
         ]);
     }

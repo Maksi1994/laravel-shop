@@ -31,13 +31,22 @@ class CategoriesController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|unique:categories'
         ]);
+        $success = false;
 
         if (!$validator->fails()) {
-            Category::create($request->all());
+            $category = Category::create([
+              'name' => $request->name,
+              'parent_id' => !empty($request->parentId) ? $request->parentId : 0
+            ]);
             $success = true;
         }
 
-        return $this->success($success);
+        return response()->json([
+            'result' => [
+                'success' => $success,
+                'id' => !empty($category) ? $category->id : null
+            ]
+        ]);
     }
 
     public function update(Request $request)

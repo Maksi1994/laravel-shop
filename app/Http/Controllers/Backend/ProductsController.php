@@ -7,6 +7,7 @@ use App\Http\Resources\Backend\Product\ProductСollection;
 use App\Models\Backend\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,15 +16,26 @@ class ProductsController extends Controller
 
     public function getAll(Request $request)
     {
-        $baseQuery = Product::with('category');
-
-        $products = Product::with('category')
+        $products = Product::selectRaw('
+        ANY_VALUE(products.id) as id,
+        COUNT(order_product.order_id) as sum_boughts,
+        ANY_VALUE(products.price) as price,
+        ANY_VALUE(products.image) as image,
+        ANY_VALUE(products.name) as name,
+        ANY_VALUE(products.created_at) as created_at,
+        ANY_VALUE(categories.id) as category_id,
+        ANY_VALUE(categories.name) as category_name
+        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
             ->filter($request->all())
-            ->orderBy('created_at', $request->order ?? 'desc')
+            ->groupBy(['products.id'])
             ->paginate(15, ['*'], ['page'], $request->page);
 
-        $priceRange = $baseQuery->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')->first();
+        $priceRange = Product::with('category')
+            ->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')
+            ->first();
         $responseData = new ProductСollection($products);
+
 
         return $responseData->additional([
             "max_price" => $priceRange->max_price,
@@ -34,14 +46,16 @@ class ProductsController extends Controller
     public function getOne(Request $request)
     {
         $product = Product::selectRaw('
-        ANY_VALUE(products.id),
+        ANY_VALUE(products.id) as id,
         COUNT(order_product.count) as sum_boughts,
-        ANY_VALUE(products.price),
-        ANY_VALUE(products.image),
-        ANY_VALUE(products.name),
-        ANY_VALUE(products.created_at),
-        ANY_VALUE(products.category_id)
+        ANY_VALUE(products.price) as price,
+        ANY_VALUE(products.image) as image,
+        ANY_VALUE(products.name) as name,
+        ANY_VALUE(products.created_at) as created_at,
+        ANY_VALUE(products.category_id) as category_id,
+        ANY_VALUE(categories.name) as category_name
         ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
             ->groupBY(['products.id'])
             ->find($request->id);
         $responseData = new ProductResource($product);
@@ -54,20 +68,20 @@ class ProductsController extends Controller
     public function create(Request $request)
     {
         $success = false;
-        $productData = $request->all();
-        $validator = Validator::make($productData, [
+        $validator = Validator::make($request->all(), [
             'name' => 'required',
             'price' => 'required|numeric',
             'category_id' => 'required',
-            'image' => 'required'
         ]);
 
-        $extension = $request->file('image')->extension();
-        $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
+        if (!empty($request->image)) {
+            $extension = $request->file('image')->extension();
+            $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
+            $request->merge(['image' => $photo]);
+        }
 
         if (!$validator->fails()) {
-            $productData['image'] = $photo;
-            $product = Product::create($productData);
+            $product = Product::create($request->all());
             $success = true;
         }
 
@@ -86,8 +100,7 @@ class ProductsController extends Controller
         $productData = $request->all();
         $validator = Validator::make($productData, [
             'name' => 'required',
-            'price' => 'required|numeric',
-            'category_id' => 'required'
+            'price' => 'required|numeric'
         ]);
 
         if ($product && !$validator->fails()) {

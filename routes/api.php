@@ -67,7 +67,6 @@ Route::group([
 
       Route::post('/get-list', 'OrdersController@getList');
       Route::post('/get-one', 'OrdersController@getOne');
-      Route::post('/set-products', 'OrdersController@setProducts');
       Route::post('/update', 'OrdersController@update');
       Route::post('/delete', 'OrdersController@delete');
   });

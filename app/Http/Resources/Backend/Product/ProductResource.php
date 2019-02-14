@@ -10,7 +10,7 @@ class ProductResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
 
@@ -19,9 +19,14 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'category' => CategoryResource::make($this->whenLoaded('category')),
+            'category' => [
+                'id' => $this->category_id,
+                'name' => $this->category_name
+            ],
             'image' => env('DO_SPACES_DOMAIN') . $this->image,
-            'price' => $this->price
+            'price' => $this->price,
+            'created_at' => $this->created_at->format('Y M d    -   h:m A'),
+            'sum_boughts' => $this->sum_boughts
         ];
     }
 }

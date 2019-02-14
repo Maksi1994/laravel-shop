@@ -10,7 +10,7 @@ class ProductСollection extends ResourceCollection
 
     use CollectionPaginationTrait;
 
-    public $collects = 'App\Http\Resources\Backend\Product\ProductResource';
+    public $collects = ProductResource::class;
 
     public function __construct($resource)
     {

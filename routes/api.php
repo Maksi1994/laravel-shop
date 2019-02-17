@@ -50,7 +50,7 @@ Route::group([
 
   Route::prefix('/promotions')->group(function () {
 
-      Route::post('/get-list', 'PromotionsController@getAll');
+      Route::post('/get-list', 'PromotionsController@getList');
       Route::post('/get-one', 'PromotionsController@getOne');
       Route::post('/create', 'PromotionsController@create');
       Route::post('/update', 'PromotionsController@update');

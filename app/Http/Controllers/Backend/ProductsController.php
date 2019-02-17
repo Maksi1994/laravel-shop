@@ -74,14 +74,15 @@ class ProductsController extends Controller
             'category_id' => 'required',
         ]);
 
-        if (!empty($request->image)) {
-            $extension = $request->file('image')->extension();
-            $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
-            $request->merge(['image' => $photo]);
-        }
-
         if (!$validator->fails()) {
             $product = Product::create($request->all());
+
+            if (!empty($request->image)) {
+                $extension = $request->file('image')->extension();
+                $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
+                $request->merge(['image' => $photo]);
+            }
+
             $success = true;
         }
 
@@ -97,22 +98,18 @@ class ProductsController extends Controller
     {
         $product = Product::find($request->id);
         $success = false;
-        $productData = $request->all();
-        $validator = Validator::make($productData, [
-            'name' => 'required',
-            'price' => 'required|numeric'
-        ]);
 
-        if ($product && !$validator->fails()) {
-
-            if (Storage::disk('space')->exists($product->image) && $productData['image']) {
+        if ($product) {
+            if (Storage::disk('space')->exists($product->image) && !empty($request->image)) {
                 Storage::disk('space')->delete($product->image);
                 $extension = $request->file('image')->extension();
                 $photo = Storage::disk('space')->putFileAs('shop/products', $request->image, time() . '.' . $extension, 'public');
-                $productData['image'] = $photo;
+
+                $request->merge(['image' => $photo]);
             }
+
+            $product->update($request->all());
             $success = true;
-            $product->update($productData);
         }
 
         return response()->json(compact('success'));

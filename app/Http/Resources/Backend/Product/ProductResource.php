@@ -23,7 +23,7 @@ class ProductResource extends JsonResource
                 'id' => $this->category_id,
                 'name' => $this->category_name
             ],
-            'image' => env('DO_SPACES_DOMAIN') . $this->image,
+            'image' => !empty($this->image) ? env('DO_SPACES_DOMAIN') . $this->image : asset('/img/products/no-image.svg'),
             'price' => $this->price,
             'created_at' => $this->created_at->format('Y M d    -   h:m A'),
             'sum_boughts' => $this->sum_boughts

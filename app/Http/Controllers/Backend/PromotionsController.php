@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Resources\Backend\Promotion\PromotionCollection;
 use App\Http\Resources\Backend\Promotion\PromotionResource;
 use App\Models\Backend\Promotion;
+use Dotenv\Validator;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -13,7 +14,9 @@ class PromotionsController extends Controller
 
     public function getList(Request $request)
     {
-        $promotions = Promotion::paginate(15, ['*'], ['page'], $request->page);
+        $promotions = Promotion::withCount('products')
+            ->filter($request->all())
+            ->paginate(15, ['*'], ['page'], $request->page ?? 1);
 
         return new PromotionCollection($promotions);
     }
@@ -21,12 +24,20 @@ class PromotionsController extends Controller
     public function create(Request $request)
     {
         $success = false;
-        $image = 'image.png';
-        $request->merge(['image', $image]);
+        $validator = Validator::make($request->all(), [
+            'name' => 'reuired|unique:promotions',
+            'image' => 'required',
+            'products.*.id' => 'required|exists:products.id',
+            'products.*.endDate' => 'required|number'
+        ]);
 
-        if (!empty($request->name) && !empty($image)) {
+        if (!$validator->fails()) {
+            $extension = $request->file('image')->extension();
+            $photo = Storage::disk('space')->putFileAs('shop/promotions', $request->image, time() . '.' . $extension, 'public');
+            $request->merge(['image' => $photo]);
+
             Promotion::create($request->all());
-
+            Promotion::attachProducts($request);
             $success = true;
         }
 
@@ -43,23 +54,17 @@ class PromotionsController extends Controller
 
     public function update(Request $request)
     {
-        $success = (boolean)Promotion::where(['id' => $request->id])
-            ->update($request->all());
-
-        return $this->success($success);
-    }
-
-    public function addProduct(Request $request)
-    {
-        $promotion = Promotion::find($request->promotion_id);
+        $promotion = Promotion::find($request->id);
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'products.*.id' => 'required|exists:products.id',
+            'products.*.endDate' => 'required|number'
+        ]);
         $success = false;
 
-        if (!empty($promotion) &&
-            !empty($request->product_id) &&
-            !empty($request->end_date)) {
-            $promotion->products()->syncWithoutDetaching([
-                    $request->product_id => ['end_date' => $request->end_date]
-                ]);
+        if ($promotion && !$validator->fails()) {
+            $promotion->update($request->all());
+            Promotion::attachProducts($request);
 
             $success = true;
         }
@@ -67,30 +72,9 @@ class PromotionsController extends Controller
         return $this->success($success);
     }
 
-    public function deleteProduct(Request $request)
+    public function delete(Request $request)
     {
-      $promotion = Promotion::find($request->promotion_id);
-      $success = false;
-
-      if (!empty($promotion) &&
-          !empty($request->product_id)) {
-          $promotion->products()->detach([$request->product_id]);
-
-          $success = true;
-      }
-
-        return $this->success($success);
-    }
-
-    public function removeAllProducts(Request $request)
-    {
-      $promotion = Promotion::find($request->promotion_id);
-      $success = false;
-
-      if (!empty($promotion)) {
-            $promotion->products()->detach();
-            $success = true;
-      }
+        $success  =  (boolean) Promotion::destroy($request->id);
 
         return $this->success($success);
     }

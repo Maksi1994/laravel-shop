@@ -9,8 +9,6 @@ class PromotionCollection extends ResourceCollection
 {
     use CollectionPaginationTrait;
 
-    public $collects = 'App\Http\Resources\Backend\Promotion\PromotionResource';
-
     public function __construct($resource)
     {
         $this->makePagination($resource);

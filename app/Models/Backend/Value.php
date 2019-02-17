@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Value extends Model
 {
-    protected $fillable = ['name', 'param_id'];
+    public $guarded = [];
     public $timestamps = true;
 
     public function param() {

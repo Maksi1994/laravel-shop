@@ -7,6 +7,7 @@ use App\Http\Resources\Backend\Order\OrderProductsCollection;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Backend\Order;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class OrdersController extends Controller
@@ -25,17 +26,17 @@ class OrdersController extends Controller
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->filter($request->all())
-            ->groupBy(['orders.id'])
+            ->groupBy('orders.id')
             ->paginate('10', null, null, $request->page ?? 1);
 
-        $priceRange = Order::selectRaw('MAX(order_product.count * order_product.price) as max_price')
+        $priceRange = Order::selectRaw('SUM(order_product.count * order_product.price) as max_price')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
-            ->groupBy(['orders.id'])
+            ->groupBy('orders.id')
             ->orderBy('max_price', 'desc')
             ->first();
 
         return (new OrderCollection($orders))->additional([
-            "max_price" => $priceRange->max_price
+            "max_price" => $priceRange->max_price,
         ]);
     }
 
@@ -44,9 +45,11 @@ class OrdersController extends Controller
         $orderProducts = $orders = Order::selectRaw('
              ANY_VALUE(orders.id) as order_id,
              ANY_VALUE(orders.created_at) as created_at,
-             order_product.product_id as id,
-             order_product.name as name,
-             products.image as image,
+             ANY_VALUE(products.id) as id,
+             ANY_VALUE(order_product.name) as name,
+             ANY_VALUE(categories.name) as category_name,
+             ANY_VALUE(categories.id) as categories_id,
+             ANY_VALUE(products.image) as image,
              SUM(order_product.count) as count,
              ANY_VALUE(order_product.price) as price_for_one,
              SUM(order_product.count * order_product.price) as full_price,
@@ -56,7 +59,8 @@ class OrdersController extends Controller
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->join('order_product', 'orders.id', '=', 'order_product.order_id')
             ->leftJoin('products', 'order_product.product_id', '=', 'products.id')
-            ->groupBy(['order_product.product_id', 'order_product.name'])
+            ->leftJoin('categories', 'categories.id' , '=', 'products.category_id')
+            ->groupBy(DB::raw(' order_product.product_id with ROLLUP'))
             ->where('order_id', $request->id)
             ->get();
 

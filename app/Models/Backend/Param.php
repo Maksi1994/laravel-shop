@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Param extends Model
 {
-    protected $fillable = ['name'];
+    public $guarded = [];
     public $timestamps = true;
 
     public function values()

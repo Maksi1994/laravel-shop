@@ -14,10 +14,23 @@ class Promotion extends Model
         return $this->belongsToMany(Product::class)->withTimestamps();
     }
 
-    public function scopeFilter($query, $params)
-    {
+    public function scopeAttachProducts($query, $params) {
+        $promotionProducts = [];
+
+        collect($params['products'])->eachSpread(function($product) use(&$promotionProducts) {
+            $promotionProducts[$product->id] = [
+                'end_date' => $product->endDate
+            ];
+        });
+
+        $query::find($params['id'])->sync($promotionProducts);
+    }
+
+    public function scopeList($query, $params) {
         $orderColumn = 'created_at';
         $order = 'desc';
+
+        $query = $query::withCount('products');
 
         $query->when((!empty($params['beginDate']) && !empty($params['endDate'])), function ($q) use ($params) {
             return $q->whereRaw('UNIX_TIMESTAMP(created_at) BETWEEN ? AND ? ', [$params['beginDate'], $params['endDate']]);
@@ -36,17 +49,5 @@ class Promotion extends Model
         }
 
         return $query->orderBy($orderColumn, $order);
-    }
-
-    static function attachProducts($request) {
-        $promotionProducts = [];
-
-        collect($request->products)->eachSpread(function($product) use(&$promotionProducts) {
-            $promotionProducts[$product->id] = [
-                'end_date' => $product->endDate
-            ];
-        });
-
-        self::find($request->id)->sync($promotionProducts);
     }
 }

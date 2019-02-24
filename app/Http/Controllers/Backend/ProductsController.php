@@ -16,28 +16,10 @@ class ProductsController extends Controller
 
     public function getAll(Request $request)
     {
-        $products = Product::selectRaw('
-        ANY_VALUE(products.id) as id,
-        COUNT(order_product.order_id) as sum_boughts,
-        ANY_VALUE(products.price) as price,
-        ANY_VALUE(products.image) as image,
-        ANY_VALUE(products.name) as name,
-        ANY_VALUE(products.created_at) as created_at,
-        ANY_VALUE(categories.id) as category_id,
-        ANY_VALUE(categories.name) as category_name
-        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
-            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
-            ->filter($request->all())
-            ->groupBy(['products.id'])
-            ->paginate(15, ['*'], ['page'], $request->page);
+        $products = Product::list($request->all())->paginate(15, ['*'], ['page'], $request->page ?? 1);
+        $priceRange = Product::priceRange();
 
-        $priceRange = Product::with('category')
-            ->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')
-            ->first();
-        $responseData = new ProductСollection($products);
-
-
-        return $responseData->additional([
+        return (new ProductСollection($products))->additional([
             "max_price" => $priceRange->max_price,
             "min_price" => $priceRange->min_price
         ]);
@@ -45,22 +27,9 @@ class ProductsController extends Controller
 
     public function getOne(Request $request)
     {
-        $product = Product::selectRaw('
-        ANY_VALUE(products.id) as id,
-        COUNT(order_product.count) as sum_boughts,
-        ANY_VALUE(products.price) as price,
-        ANY_VALUE(products.image) as image,
-        ANY_VALUE(products.name) as name,
-        ANY_VALUE(products.created_at) as created_at,
-        ANY_VALUE(products.category_id) as category_id,
-        ANY_VALUE(categories.name) as category_name
-        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
-            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
-            ->groupBY(['products.id'])
-            ->find($request->id);
-        $responseData = new ProductResource($product);
+        $product = Product::getOne($request->all());
 
-        return $responseData->additional([
+        return (new ProductResource($product))->additional([
             'sum_boughts' => $product->sum_boughts
         ]);
     }

@@ -18,8 +18,4 @@ class Category extends Model
         return $this->belongsTo(static::class);
     }
 
-    public static function getCategories(Request $request) {
-
-    }
-
 }

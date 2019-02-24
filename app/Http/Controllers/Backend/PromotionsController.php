@@ -14,9 +14,7 @@ class PromotionsController extends Controller
 
     public function getList(Request $request)
     {
-        $promotions = Promotion::withCount('products')
-            ->filter($request->all())
-            ->paginate(15, ['*'], ['page'], $request->page ?? 1);
+        $promotions = Promotion::list($request->all())->paginate(15, ['*'], ['page'], $request->page ?? 1);
 
         return new PromotionCollection($promotions);
     }
@@ -37,7 +35,7 @@ class PromotionsController extends Controller
             $request->merge(['image' => $photo]);
 
             Promotion::create($request->all());
-            Promotion::attachProducts($request);
+            Promotion::attachProducts($request->all());
             $success = true;
         }
 
@@ -74,7 +72,7 @@ class PromotionsController extends Controller
 
     public function delete(Request $request)
     {
-        $success  =  (boolean) Promotion::destroy($request->id);
+        $success = (boolean)Promotion::destroy($request->id);
 
         return $this->success($success);
     }

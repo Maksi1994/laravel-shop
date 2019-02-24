@@ -51,8 +51,7 @@ class ParamsController extends Controller
     public function setValues(Request $request)
     {
         $success = false;
-        $validationValues = Validator::make($request->all(),
-            [
+        $validationValues = Validator::make($request->all(), [
                 'values.*.value' => 'required',
                 'param_id' => 'required'
             ]

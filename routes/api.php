@@ -81,6 +81,14 @@ Route::group([
       Route::post('/delete', 'ParamsController@delete');
   });
 
+    Route::prefix('/users')->group(function () {
+        
+        Route::post('/get-list', 'UsersController@getList');
+        Route::post('/get-one', 'UsersController@getOne');
+        Route::post('/toggle-block', 'UsersController@toggleBlock');
+        Route::post('/delete', 'UsersController@delete');
+    });
+
 });
 
 Route::group([

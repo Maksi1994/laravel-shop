@@ -40,4 +40,12 @@ class User extends Authenticatable
     {
         return $this->role()->where('name', 'admin')->exists();
     }
+
+    public function orders()
+    {
+        return $this->belongsTo(\App\Models\Backend\Order::class);
+    }
+
+
+
 }

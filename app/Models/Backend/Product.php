@@ -24,10 +24,23 @@ class Product extends Model
         return $this->belongsToMany(Promotion::class)->withTimestamps();
     }
 
-    public function scopeFilter($query, $params)
+    public function scopeList($query, $params)
     {
         $orderColumn = 'products.created_at';
         $order = 'desc';
+
+        $query = $query->selectRaw('
+        ANY_VALUE(products.id) as id,
+        COUNT(order_product.order_id) as sum_boughts,
+        ANY_VALUE(products.price) as price,
+        ANY_VALUE(products.image) as image,
+        ANY_VALUE(products.name) as name,
+        ANY_VALUE(products.created_at) as created_at,
+        ANY_VALUE(categories.id) as category_id,
+        ANY_VALUE(categories.name) as category_name
+        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->groupBy(['products.id']);
 
         if (!empty($params['categoryId']) && empty($params['categoryId'])) {
             $query = $query->where('products.category_id', $params['categoryId']);
@@ -41,9 +54,6 @@ class Product extends Model
             $order = $params['order'];
 
             switch ($params['orderType']) {
-                case 'newest':
-                    $orderColumn = 'products.created_at';
-                    break;
                 case 'price':
                     $orderColumn = 'products.price';
                     break;
@@ -53,5 +63,27 @@ class Product extends Model
         }
 
         return $query->orderBy($orderColumn, $order);
+    }
+
+    public function scopeGetOne($query, $params)
+    {
+        return $query->selectRaw('
+        ANY_VALUE(products.id) as id,
+        COUNT(order_product.count) as sum_boughts,
+        ANY_VALUE(products.price) as price,
+        ANY_VALUE(products.image) as image,
+        ANY_VALUE(products.name) as name,
+        ANY_VALUE(products.created_at) as created_at,
+        ANY_VALUE(products.category_id) as category_id,
+        ANY_VALUE(categories.name) as category_name
+        ')->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->groupBY(['products.id'])
+            ->find($params['id']);
+    }
+
+    public function scopePriceRange($query)
+    {
+        return $query->selectRaw('MAX(products.price) as max_price, MIN(products.price) as min_price')->first();
     }
 }

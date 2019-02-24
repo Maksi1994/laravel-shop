@@ -37,7 +37,9 @@ class User extends Model
         users.last_name,
         users.created_at,
         COUNT(orders.id) as orders_count,
-        SUM(order_product.price * order_product.count) as sum_all_orders
+        SUM(order_product.price * order_product.count) as sum_all_orders,
+        users.is_blocked,
+        users.created_at
         ')->leftJoin('orders', 'orders.user_id', '=', 'users.id')
             ->leftJoin('order_product', 'order_product.order_id', 'orders.id')
             ->groupBy('users.id');
@@ -71,12 +73,15 @@ class User extends Model
         users.last_name,
         users.created_at,
         COUNT(orders.id) as orders_count,
-        SUM(order_product.price * order_product.count) as sum_all_orders
+        SUM(order_product.price * order_product.count) as sum_all_orders,
+        users.is_blocked,
+         users.created_at
         ')->leftJoin('orders', 'orders.user_id', '=', 'users.id')
             ->leftJoin('order_product', 'order_product.order_id', 'orders.id')
             ->groupBy('users.id')
             ->where('users.id', $params['id'])
-            ->get();
+            ->get()
+            ->first();
     }
 
 }

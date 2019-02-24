@@ -9,15 +9,27 @@ class PromotionResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return array
      */
     public function toArray($request)
     {
         return [
-          'name' => $this->name,
-          'image' => $this->image,
-          'id' => $this->id
+            'id' => $this->id,
+            'name' => $this->name,
+            'image' => $this->image,
+            'products_count' => $this->products_count,
+            'created_at'=> $this->created_at->format('Y M d    -   h:m A'),
+            'products' => $this->products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'image' => !empty($product->image) ? env('DO_SPACES_DOMAIN') . $product->image : asset('/img/products/no-image.svg'),
+                    'price' => $product->price,
+                    'category_name' => $product->category->name,
+                    'category_id' => $product->category->id
+                ];
+            })
         ];
     }
 }

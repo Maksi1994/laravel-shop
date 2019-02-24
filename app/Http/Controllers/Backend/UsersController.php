@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Backend;
 
+use App\Http\Resources\Backend\User\UserCollection;
+use App\Http\Resources\Backend\User\UserResource;
 use App\Models\Backend\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
@@ -14,14 +15,14 @@ class UsersController extends Controller
     {
         $users = User::list($request->all())->paginate(15, null, null, $request->page ?? 1);
 
-        return response()->json($users->values());
+        return new UserCollection($users);
     }
 
     public function getOne(Request $request)
     {
         $user = User::getOne($request->all());
 
-        return response()->json($user->all());
+        return new UserResource($user);
     }
 
     public function toggleBlock(Request $request)

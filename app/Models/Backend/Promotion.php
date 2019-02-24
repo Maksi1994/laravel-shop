@@ -30,7 +30,7 @@ class Promotion extends Model
         $orderColumn = 'created_at';
         $order = 'desc';
 
-        $query = $query::withCount('products');
+        $query = $query->withCount('products');
 
         $query->when((!empty($params['beginDate']) && !empty($params['endDate'])), function ($q) use ($params) {
             return $q->whereRaw('UNIX_TIMESTAMP(created_at) BETWEEN ? AND ? ', [$params['beginDate'], $params['endDate']]);
@@ -49,5 +49,9 @@ class Promotion extends Model
         }
 
         return $query->orderBy($orderColumn, $order);
+    }
+
+    public function types() {
+        return $this->belongsToMany(PromotionType::class,'product_promotion', 'promotion_type_id', 'id');
     }
 }

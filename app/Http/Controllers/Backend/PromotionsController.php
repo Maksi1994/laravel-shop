@@ -44,7 +44,11 @@ class PromotionsController extends Controller
 
     public function getOne(Request $request)
     {
-        $promotion = Promotion::find($request->id);
+        $promotion = Promotion::withCount('products')
+            ->with([
+                'products',
+                'products.category'
+            ])->find($request->id);
 
         return new PromotionResource($promotion);
     }

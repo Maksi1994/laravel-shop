@@ -44,6 +44,7 @@ Route::group([
       Route::post('/get-one', 'CategoriesController@getOne');
       Route::post('/create', 'CategoriesController@create');
       Route::post('/update', 'CategoriesController@update');
+      Route::post('/update', 'CategoriesController@update');
       Route::post('/delete', 'CategoriesController@delete');
   });
 
@@ -87,6 +88,14 @@ Route::group([
         Route::post('/get-one', 'UsersController@getOne');
         Route::post('/toggle-block', 'UsersController@toggleBlock');
         Route::post('/delete', 'UsersController@delete');
+    });
+
+    Route::group([
+        'prefix' => '/comments'
+    ], function () {
+        Route::post('/get-list', 'CommentsController@getList');
+        Route::post('/get-one', 'CommentsController@getOne');
+        Route::post('/delete', 'CommentsController@delete');
     });
 
 });

@@ -6,6 +6,7 @@ use App\Http\Resources\Backend\Promotion\PromotionCollection;
 use App\Http\Resources\Backend\Promotion\PromotionResource;
 use App\Models\Backend\Promotion;
 use Dotenv\Validator;
+use http\Env\Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -46,11 +47,13 @@ class PromotionsController extends Controller
     {
         $promotion = Promotion::withCount('products')
             ->with([
+                'types',
                 'products',
-                'products.category'
+                'products.category',
+                'products.promotionType'
             ])->find($request->id);
-
-        return new PromotionResource($promotion);
+        return response()->json($promotion);
+        // return new PromotionResource($promotion);
     }
 
 

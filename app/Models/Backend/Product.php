@@ -24,6 +24,21 @@ class Product extends Model
         return $this->belongsToMany(Promotion::class)->withTimestamps();
     }
 
+    public function promotionType()
+    {
+        return $this->belongsToMany(PromotionType::class, 'product_promotion', 'promotion_type_id', 'product_id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function paramValues()
+    {
+        return $this->belongsToMany(Value::class, 'param_product_value', 'value_id', 'product_id')->withTimestamps();
+    }
+
     public function scopeList($query, $params)
     {
         $orderColumn = 'products.created_at';

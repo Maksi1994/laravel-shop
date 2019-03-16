@@ -26,6 +26,11 @@ class User extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
     public function scopeList($query, $params)
     {
         $orderColumn = 'created_at';

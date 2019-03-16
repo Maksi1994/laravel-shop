@@ -14,9 +14,9 @@ class ParamsController extends Controller
 
     public function getList(Request $request)
     {
-        $params = Param::paginate(15, null, null, $request->page ?? 1);
+        $params = Param::getList($request)->paginate(15, null, null, $request->page ?? 1);
 
-        return new PromotionCollection($params);
+        return response()->json($params);
     }
 
     public function getOne(Request $request)
@@ -48,30 +48,23 @@ class ParamsController extends Controller
         return $this->success($success);
     }
 
-    public function setValues(Request $request)
-    {
-        $success = false;
-        $validationValues = Validator::make($request->all(), [
-                'values.*.value' => 'required',
-                'param_id' => 'required'
-            ]
-        );
-        $param = Param::find($request->param_id);
-
-        if (!$validationValues->fails() && $param) {
-            $success = true;
-            $param->values()->delete();
-
-            if (count($request->values)) {
-                $param->createMany($request->values);
-            }
-        }
-
-        return $this->success($success);
-    }
-
     public function update(Request $request)
     {
+        $validationValues = Validator::make($request->all(), [
+                'values.*.id' => 'required|exists:valued',
+                'values.*.value' => 'required',
+                'id' => 'required|exists:params',
+                'name' => 'required'
+            ]
+        );
+        $param = Param::find($request->id);
+
+        if (!empty($request->values)) {
+            $param->values()->sync();
+            $param->values();
+        }
+
+        Param::products()->sync()
         $success = Param::where('id', $request->id)->update($request->all());
 
         return $this->success($success);

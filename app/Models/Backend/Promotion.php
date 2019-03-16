@@ -11,7 +11,7 @@ class Promotion extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class)->withTimestamps();
+        return $this->belongsToMany(Product::class);
     }
 
     public function scopeAttachProducts($query, $params) {
@@ -52,6 +52,6 @@ class Promotion extends Model
     }
 
     public function types() {
-        return $this->belongsToMany(PromotionType::class,'product_promotion', 'promotion_type_id', 'id');
+        return $this->belongsToMany(PromotionType::class,'product_promotion', 'promotion_type_id', 'promotion_id')->distinct();
     }
 }
